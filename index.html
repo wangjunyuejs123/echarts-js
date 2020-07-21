@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>上市公司全景概览 - 大屏数据可视化案例</title>
+    <link rel="stylesheet" type="text/css" href="css/app.css" />
+    <script src="js/echarts.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/echarts.js"></script>
+    <script src="js/china.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .map {
+            width: 800px;
+            height: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header">
+        <h3 class="header-title">上市公司全景概览</h3>
+        <div class="header-info header-info-l">数据来源：上交所 &amp; 深交所</div>
+        <div class="header-info header-info-r">数据日期：<span id="nowDate"></span></div>
+    </header>
+
+    <footer id="footer"></footer>
+
+    <div id="container">
+        <div id="flexCon">
+            <div class="flex-row" style="height: 500px;">
+                <div class="flex-cell" style="flex-grow: 1;">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title">市价总值排行Top10</h3>
+                        <div class="chart-div" id="rankChart">
+                            <div class="chart-loader">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-cell" style="padding-right:0;flex-grow: 2;">
+                    <div class="chart-wrapper">
+                        <!--    设置地图容器，需要设置宽高样式-->
+                        <div id="main" class="map">
+                            <div class="chart-loader">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                        <!-- <div class="chart-div" id="transportChart">
+
+                        </div> -->
+                    </div>
+                </div>
+                <div class="flex-cell flex-cell-r" style="padding-left:0;flex-grow: 1;">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title">上市公司地域分布</h3>
+                        <div class="chart-div" id="mapChart">
+                            <div class="chart-loader">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- lsdfj  -->
+            <div class="" style="height: 300px;width: 100%;display: flex;">
+                <div class="flex-cell" style="padding-bottom:0;padding: 10px;justify-content: space-around;">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title">柱状图</h3>
+                        <div id="zhu" style="width: 400px;height:280px;color: white;margin-left: 30px;"></div>
+                    </div>
+                </div>
+                <div class="flex-cell" style="padding-bottom:0;justify-content: space-around;">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title">饼图</h3>
+                        <div id="bingChart" style="width: 400px;height:290px;color: white;-webkit-tap-highlight-color:white">
+                            <!-- 加载效果 -->
+                            <!-- <div class="chart-loader">
+                                <div class="loader"></div>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-cell" style="padding-bottom:0;justify-content: space-around;">
+                    <div class="chart-wrapper">
+                        <h3 class="chart-title">漏斗图</h3>
+                        <div id="louDouChart" style="width: 400px;height:290px;color: white;-webkit-tap-highlight-color:white">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="js/countUp.min.js"></script>
+    <script type="text/javascript" src="js/echarts.min.js"></script>
+    <script type="text/javascript" src="js/echarts-map-china.js"></script>
+    <script type="text/javascript" src="js/echarts-theme-shine.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            //获取当天日期
+            (function() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth() + 1;
+                const day = now.getDate();
+                $("#nowDate").html(year + "年" + month + "月" + day + "日");
+            })();
+            //获取排行数据
+            const rankChart = echarts.init(document.getElementById("rankChart"), "shine");
+            const rankChartOpt = {
+                dataset: {
+                    source: [
+                        ['score', 'amount', 'product'],
+                        [89.3, 58212, 'Matcha Latte'],
+                        [57.1, 78254, 'Milk Tea'],
+                        [74.4, 41032, 'Cheese Cocoa'],
+                        [50.1, 12755, 'Cheese Brownie'],
+                        [89.7, 20145, 'Matcha Cocoa'],
+                        [68.1, 79146, 'Tea'],
+                        [19.6, 91852, 'Orange Juice'],
+                        [10.6, 101852, 'Lemon Juice'],
+                        [32.7, 20112, 'Walnut Brownie']
+                    ]
+                },
+                grid: {
+                    containLabel: true
+                },
+                xAxis: {
+                    name: 'amount',
+                    axisLabel: {
+                        show: true,
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    axisLabel: {
+                        show: true,
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                visualMap: {
+                    orient: 'horizontal',
+                    left: 'center',
+                    min: 10,
+                    max: 100,
+                    text: ['High Score', 'Low Score'],
+                    // Map the score column to color
+                    dimension: 0,
+                    inRange: {
+                        color: ['#D7DA8B', '#E15457']
+                    }
+                },
+                series: [{
+                    type: 'bar',
+                    encode: {
+                        // Map the "amount" column to X axis.
+                        x: 'amount',
+                        // Map the "product" column to Y axis
+                        y: 'product'
+                    }
+                }]
+            };
+            rankChart.setOption(rankChartOpt);
+            // $.ajax({
+            //     url: "data/ranking-list.json",
+            //     dataType: "json"
+            // }).done(function() {
+            //     $("#rankChart").addClass("chart-done");
+            // }).done(function(data) {
+            //     //console.log('Data: ', data);
+            //     const xData = [];
+            //     const yData = [];
+            //     for (let i in data) {
+            //         xData.push(data[i].market_capitalization);
+            //         yData.push(data[i].stock_name);
+            //     }
+            //     rankChart.setOption({
+            //         yAxis: {
+            //             data: yData
+            //         },
+            //         series: [{
+            //             name: "市价总值排行",
+            //             data: xData
+            //         }]
+            //     });
+            // }).fail(function(jqXHR) {
+            //     console.log("Ajax Fail: ", jqXHR.status, jqXHR.statusText);
+            // });
+            //获取条形图
+            const mapChart = echarts.init(document.getElementById("mapChart"), "shine");
+            const mapChartOpt = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { // 坐标轴指示器，坐标轴触发有效
+                        type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['利润', '支出', '收入'],
+                    textStyle: {
+                        color: '#ffffff' //字体颜色
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true,
+                },
+                xAxis: [{
+                    type: 'value',
+                    axisLabel: {
+                        show: true,
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    }
+                }],
+                yAxis: [{
+                    type: 'category',
+                    axisTick: {
+                        show: false
+                    },
+                    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    axisLabel: {
+                        show: true,
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    }
+                }],
+                series: [{
+                    name: '利润',
+                    type: 'bar',
+                    label: {
+                        show: true,
+                        position: 'inside'
+                    },
+                    data: [200, 170, 240, 244, 200, 220, 210]
+                }, {
+                    name: '收入',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true
+                    },
+                    data: [320, 302, 341, 374, 390, 450, 420]
+                }, {
+                    name: '支出',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true,
+                        position: 'left'
+                    },
+                    data: [-120, -132, -101, -134, -190, -230, -210]
+                }]
+            };
+            mapChart.setOption(mapChartOpt);
+            // $.ajax({
+            //     url: "data/region-count.json",
+            //     dataType: "json"
+            // }).done(function() {
+            //     $("#mapChart").addClass("chart-done");
+            // }).done(function(data) {
+            //     //console.log('Data: ', data);
+            //     const chartData = [];
+            //     for (let i in data) {
+            //         chartData.push({
+            //             name: data[i].region,
+            //             value: data[i].count
+            //         });
+            //     }
+            //     mapChart.setOption({
+            //         series: [{
+            //             name: "地域分布",
+            //             data: chartData
+            //         }]
+            //     });
+            // }).fail(function(jqXHR) {
+            //     console.log("Ajax Fail: ", jqXHR.status, jqXHR.statusText);
+            // });
+
+            //柱状图
+            const zhuChart = echarts.init(document.getElementById('zhu'));
+            const opt = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { // 坐标轴指示器，坐标轴触发有效
+                        type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['直接访问', '邮件营销', '联盟广告', '视频广告', '搜索引擎'],
+                    textStyle: {
+                        color: '#ffffff' //字体颜色
+                    },
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        show: true,
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    axisLabel: {
+                        show: true,
+                        textStyle: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                series: [{
+                    name: '直接访问',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true,
+                        position: 'insideRight'
+                    },
+                    data: [320, 302, 301, 334, 390, 330, 320]
+                }, {
+                    name: '邮件营销',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true,
+                        position: 'insideRight'
+                    },
+                    data: [120, 132, 101, 134, 90, 230, 210]
+                }, {
+                    name: '联盟广告',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true,
+                        position: 'insideRight'
+                    },
+                    data: [220, 182, 191, 234, 290, 330, 310]
+                }, {
+                    name: '视频广告',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true,
+                        position: 'insideRight'
+                    },
+                    data: [150, 212, 201, 154, 190, 330, 410]
+                }, {
+                    name: '搜索引擎',
+                    type: 'bar',
+                    stack: '总量',
+                    label: {
+                        show: true,
+                        position: 'insideRight'
+                    },
+                    data: [820, 832, 901, 934, 1290, 1330, 1320]
+                }]
+            };
+            zhuChart.setOption(opt);
+            //饼桩图
+            const bingChart = echarts.init(document.getElementById("bingChart"));
+            const bingChartOpt = {
+                backgroundColor: '',
+
+                title: {
+                    text: 'Customized Pie',
+                    left: 'center',
+                    top: 10,
+                    textStyle: {
+                        color: '#ccc'
+                    }
+                },
+
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b} : {c} ({d}%)'
+                },
+
+                visualMap: {
+                    show: false,
+                    min: 80,
+                    max: 600,
+                    inRange: {
+                        colorLightness: [0, 1]
+                    }
+                },
+                series: [{
+                    name: '访问来源',
+                    type: 'pie',
+                    radius: '55%',
+                    center: ['50%', '50%'],
+                    data: [{
+                        value: 335,
+                        name: '直接访问'
+                    }, {
+                        value: 310,
+                        name: '邮件营销'
+                    }, {
+                        value: 274,
+                        name: '联盟广告'
+                    }, {
+                        value: 235,
+                        name: '视频广告'
+                    }, {
+                        value: 400,
+                        name: '搜索引擎'
+                    }].sort(function(a, b) {
+                        return a.value - b.value;
+                    }),
+                    roseType: 'radius',
+                    label: {
+                        color: 'white'
+                    },
+                    labelLine: {
+                        lineStyle: {
+                            color: 'blue'
+                        },
+                        smooth: 0.2,
+                        length: 10,
+                        length2: 20
+                    },
+                    itemStyle: {
+                        color: '#c23531',
+                        shadowBlur: 200,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    },
+
+                    animationType: 'scale',
+                    animationEasing: 'elasticOut',
+                    animationDelay: function(idx) {
+                        return Math.random() * 200;
+                    }
+                }]
+            };
+            bingChart.setOption(bingChartOpt);
+            // 漏斗图
+            const louDouChart = echarts.init(document.getElementById("louDouChart"));
+            const louDouChartOpt = {
+                title: {
+                    text: '漏斗图',
+                    subtext: '纯属虚构'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: "{a} <br/>{b} : {c}%"
+                },
+                toolbox: {
+                    feature: {
+                        dataView: {
+                            readOnly: false
+                        },
+                        restore: {},
+                        saveAsImage: {}
+                    }
+                },
+                legend: {
+                    data: ['展现', '点击', '访问', '咨询', '订单'],
+                    textStyle: {
+                        color: '#ffffff' //字体颜色
+                    }
+                },
+                series: [{
+                    name: '预期',
+                    type: 'funnel',
+                    left: '10%',
+                    width: '80%',
+                    label: {
+                        formatter: '{b}预期'
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    itemStyle: {
+                        opacity: 0.7
+                    },
+                    emphasis: {
+                        label: {
+                            position: 'inside',
+                            formatter: '{b}预期: {c}%'
+                        }
+                    },
+                    data: [{
+                        value: 60,
+                        name: '访问'
+                    }, {
+                        value: 40,
+                        name: '咨询'
+                    }, {
+                        value: 20,
+                        name: '订单'
+                    }, {
+                        value: 80,
+                        name: '点击'
+                    }, {
+                        value: 100,
+                        name: '展现'
+                    }]
+                }, {
+                    name: '实际',
+                    type: 'funnel',
+                    left: '10%',
+                    width: '80%',
+                    maxSize: '80%',
+                    label: {
+                        position: 'inside',
+                        formatter: '{c}%',
+                        color: '#fff'
+                    },
+                    itemStyle: {
+                        opacity: 0.5,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        label: {
+                            position: 'inside',
+                            formatter: '{b}实际: {c}%'
+                        }
+                    },
+                    data: [{
+                        value: 30,
+                        name: '访问'
+                    }, {
+                        value: 10,
+                        name: '咨询'
+                    }, {
+                        value: 5,
+                        name: '订单'
+                    }, {
+                        value: 50,
+                        name: '点击'
+                    }, {
+                        value: 80,
+                        name: '展现'
+                    }]
+                }]
+            };
+            louDouChart.setOption(louDouChartOpt);
+            // $.ajax({
+            //     url: "data/csrc-industry.json",
+            //     dataType: "json"
+            // }).done(function() {
+            //     $("#csrcChart").addClass("chart-done");
+            // }).done(function(data) {
+            //     //console.log('Data: ', data);
+            //     const chartData = [];
+            //     for (let i in data) {
+            //         chartData.push({
+            //             name: data[i].alias,
+            //             value: data[i].stock
+            //         });
+            //     }
+            //     csrcChart.setOption({
+            //         series: [{
+            //             name: "CSRC行业分类",
+            //             data: chartData
+            //         }]
+            //     });
+            // }).fail(function(jqXHR) {
+            //     console.log("Ajax Fail: ", jqXHR.status, jqXHR.statusText);
+            // });
+
+            //浏览器窗口大小变化时，重置报表大小
+            $(window).resize(function() {
+                rankChart.resize();
+                mapChart.resize();
+                trendChart.resize();
+                csrcChart.resize();
+            });
+        });
+
+        //数字变化特效
+        function rollNum(elId, startVal, endVal, decimalNum) {
+            let n = decimalNum || 0;
+            let countUp = new CountUp(elId, startVal, endVal, n, 2.5, {
+                useEasing: true,
+                useGrouping: true,
+                separator: ',',
+                decimal: '.'
+            });
+            if (!countUp.error) {
+                countUp.start();
+            } else {
+                console.error(countUp.error);
+            }
+        };
+        //地图
+        var myChart = echarts.init(document.getElementById('main'));
+        // 数据格式 地图上标点为citys，value为经纬度，symbolSize为标记点的大小
+        // 数据格式 moveLines，fromName为线条出发城市，toName为线条到达城市，coords为数组经纬度，第一个为出发点经纬度，第二个为到达点经纬度
+
+        var uploadedDataURL = "data/data-map.json";
+
+//如果想要修改，请点击上方克隆，然后在自己的版本上修改，不要在lz的版本上改！！
+
+// echarts.extendsMap = function(id, opt) {
+//     // 实例
+
+
+//     var cityMap = {
+//         "郑州市": zhengzhou,
+//         "开封市": kaifeng,
+//         "洛阳市": luoyang,
+//         "平顶山市": pingdingshan,
+//         "安阳市": anyang,
+//         "鹤壁市": hebi,
+//         "新乡市": xinxiang,
+//         "焦作市": jiaozuo,
+//         "濮阳市": puyang,
+//         "漯河市": luohe,
+//         "三门峡市": sanmenxia,
+//         "南阳市": nanyang,
+//         "商丘市": shangqiu,
+//         "信阳市": xinyang,
+//         "周口市": zhoukou,
+//         "许昌市": xuchang,
+//         "驻马店市": zhumadian
+//     };
+
+// }
+var geoGpsMap = {
+    '1': [125.8154, 44.2584],
+    '2': [125.8154, 44.2584],
+    '3': [117.1582, 36.8701],
+    '4': [117.1582, 36.8701],
+    '5': [103.9526, 30.7617],
+    '6': [103.9526, 30.7617],
+};
+var geoCoordMap = {
+    "江苏": [118.8062, 31.9208],
+    '黑龙江': [127.9688, 45.368],
+    '内蒙古': [110.3467, 41.4899],
+    "吉林": [125.8154, 44.2584],
+    '北京市': [116.4551, 40.2539],
+    "辽宁": [123.1238, 42.1216],
+    "河北": [114.4995, 38.1006],
+    "天津": [117.4219, 39.4189],
+    "山西": [112.3352, 37.9413],
+    "陕西": [109.1162, 34.2004],
+    "甘肃": [103.5901, 36.3043],
+    "宁夏": [106.3586, 38.1775],
+    "青海": [101.4038, 36.8207],
+    "新疆": [87.9236, 43.5883],
+    "四川": [103.9526, 30.7617],
+    "重庆": [108.384366, 30.439702],
+    "山东": [117.1582, 36.8701],
+    "河南": [113.4668, 34.6234],
+    "安徽": [117.29, 32.0581],
+    "湖北": [114.3896, 30.6628],
+    "浙江": [119.5313, 29.8773],
+    "福建": [119.4543, 25.9222],
+    "江西": [116.0046, 28.6633],
+    "湖南": [113.0823, 28.2568],
+    "贵州": [106.6992, 26.7682],
+    "云南": [102.9199, 25.4663],
+    "广东": [113.12244, 23.009505],
+    "广西": [108.479, 23.1152],
+    "海南": [110.3893, 19.8516],
+    '上海': [121.4648, 31.2891],
+};
+
+var d1 = {
+    '江苏': 10041,
+    '黑龙江': 4093,
+    '内蒙古': 1157,
+    '吉林': 4903,
+    '北京市': 2667,
+    '辽宁': 8331,
+    '河北': 23727,
+    '天津': 681,
+    '山西': 5352,
+    '陕西': 38,
+    '甘肃': 77,
+    '宁夏': 65,
+    '青海': 10,
+    '新疆': 193,
+    '四川': 309,
+    '重庆': 77,
+    '山东': 21666,
+    '河南': 15717,
+    '安徽': 15671,
+    '湖北': 3714,
+    '浙江': 3141,
+    '福建': 955,
+    '江西': 4978,
+    '湖南': 778,
+    '贵州': 33,
+    '云南': 149,
+    '广东': 1124,
+    '广西': 125,
+    '海南': 7,
+    '上海': 2155,
+
+};
+
+var d2 = {
+    "江苏": 0,
+    '黑龙江': 0,
+    '内蒙古': 0,
+    "吉林": 0,
+    '北京市': 0,
+    "辽宁": 0,
+    "河北": 0,
+    "天津": 0,
+    "山西": 0,
+    "陕西": 0,
+    "甘肃": 0,
+    "宁夏": 0,
+    "青海": 0,
+    "新疆": 0,
+    "四川": 0,
+    "重庆": 0,
+    "山东": 0,
+    "河南": 0,
+    "安徽": 0,
+    "湖北": 0,
+    "浙江": 0,
+    "福建": 0,
+    "江西": 0,
+    "湖南": 0,
+    "贵州": 0,
+    "云南": 0,
+    "广东": 0,
+    "广西": 0,
+    '海南': 0,
+    '上海': 0,
+
+};
+
+var d3 = {
+    '江苏': 11788,
+    '黑龙江': 1944,
+    '内蒙古': 2954,
+    '吉林': 3482,
+    '北京市': 1808,
+    '辽宁': 5488,
+    '河北': 27035,
+    '天津': 2270,
+    '山西': 13623,
+    '陕西': 4221,
+    '甘肃': 754,
+    '宁夏': 1783,
+    '青海': 91,
+    '新疆': 1907,
+    '四川': 4905,
+    '重庆': 1420,
+    '山东': 39781,
+    '河南': 16154,
+    '安徽': 7914,
+    '湖北': 6802,
+    '浙江': 5812,
+    '福建': 3345,
+    '江西': 4996,
+    '湖南': 5627,
+    '贵州': 1504,
+    '云南': 2725,
+    '广东': 6339,
+    '广西': 1009,
+    '海南': 0,
+    '上海': 1988,
+
+
+
+};
+
+var d4 = {
+    "江苏": 0,
+    '黑龙江': 0,
+    '内蒙古': 0,
+    "吉林": 0,
+    '北京市': 0,
+    "辽宁": 0,
+    "河北": 0,
+    "天津": 0,
+    "山西": 0,
+    "陕西": 0,
+    "甘肃": 0,
+    "宁夏": 0,
+    "青海": 0,
+    "新疆": 0,
+    "四川": 0,
+    "重庆": 0,
+    "山东": 0,
+    "河南": 0,
+    "安徽": 0,
+    "湖北": 0,
+    "浙江": 0,
+    "福建": 0,
+    "江西": 0,
+    "湖南": 0,
+    "贵州": 0,
+    "云南": 0,
+    "广东": 0,
+    "广西": 0,
+    '海南': 0,
+    '上海': 0,
+};
+
+var d5 = {
+    '江苏': 159,
+    '黑龙江': 5,
+    '内蒙古': 54,
+    '吉林': 10,
+    '北京市': 0,
+    '辽宁': 0,
+    '河北': 1679,
+    '天津': 1,
+    '山西': 2698,
+    '陕西': 1744,
+    '甘肃': 362,
+    '宁夏': 429,
+    '青海': 122,
+    '新疆': 731,
+    '四川': 3925,
+    '重庆': 1480,
+    '山东': 79,
+    '河南': 1017,
+    '安徽': 208,
+    '湖北': 1209,
+    '浙江': 1418,
+    '福建': 1237,
+    '江西': 1004,
+    '湖南': 1511,
+    '贵州': 345,
+    '云南': 1429,
+    '广东': 2242,
+    '广西': 2271,
+    '海南': 59,
+    '上海': 8,
+
+
+
+};
+
+var d6 = {
+    "江苏": 0,
+    '黑龙江': 0,
+    '内蒙古': 0,
+    "吉林": 0,
+    '北京市': 0,
+    "辽宁": 0,
+    "河北": 0,
+    "天津": 0,
+    "山西": 0,
+    "陕西": 0,
+    "甘肃": 0,
+    "宁夏": 0,
+    "青海": 0,
+    "新疆": 0,
+    "四川": 0,
+    "重庆": 0,
+    "山东": 0,
+    "河南": 0,
+    "安徽": 0,
+    "湖北": 0,
+    "浙江": 0,
+    "福建": 0,
+    "江西": 0,
+    "湖南": 0,
+    "贵州": 0,
+    "云南": 0,
+    "广东": 0,
+    "广西": 0,
+    '海南': 0,
+    '上海': 0,
+};
+
+var colors = [
+    ["#1DE9B6", "#1DE9B6", "#FFDB5C", "#FFDB5C", "#04B9FF", "#04B9FF"],
+    ["#1DE9B6", "#F46E36", "#04B9FF", "#5DBD32", "#FFC809", "#FB95D5", "#BDA29A", "#6E7074", "#546570", "#C4CCD3"],
+    ["#37A2DA", "#67E0E3", "#32C5E9", "#9FE6B8", "#FFDB5C", "#FF9F7F", "#FB7293", "#E062AE", "#E690D1", "#E7BCF3", "#9D96F5", "#8378EA", "#8378EA"],
+    ["#DD6B66", "#759AA0", "#E69D87", "#8DC1A9", "#EA7E53", "#EEDD78", "#73A373", "#73B9BC", "#7289AB", "#91CA8C", "#F49F42"],
+];
+var colorIndex = 0;
+    var year = ["长春", "长春", "青岛", "青岛", "成都", "成都"];
+    var mapData = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+    ];
+
+    /*柱子Y名称*/
+    var categoryData = [];
+    var barData = [];
+
+    for (var key in geoCoordMap) {
+        mapData[0].push({
+            "year": '长春',
+            "name": key,
+            "value": d1[key] / 100,
+            "value1": d1[key] / 100,
+        });
+        mapData[1].push({
+            "year": '长春',
+            "name": key,
+            "value": d1[key] / 100,
+            "value1": d2[key] / 100,
+        });
+        mapData[2].push({
+            "year": '青岛',
+            "name": key,
+            "value": d3[key] / 100,
+            "value1": d3[key] / 100,
+        });
+        mapData[3].push({
+            "year": '青岛',
+            "name": key,
+            "value": d3[key] / 100,
+            "value1": d4[key] / 100,
+        });
+        mapData[4].push({
+            "year": '成都',
+            "name": key,
+            "value": d5[key] / 100,
+            "value1": d5[key] / 100,
+        });
+        mapData[5].push({
+            "year": '成都',
+            "name": key,
+            "value": d5[key] / 100,
+            "value1": d6[key] / 100,
+        });
+    }
+
+    for (var i = 0; i < mapData.length; i++) {
+        mapData[i].sort(function sortNumber(a, b) {
+            return a.value - b.value
+        });
+        barData.push([]);
+        categoryData.push([]);
+        for (var j = 0; j < mapData[i].length; j++) {
+            barData[i].push(mapData[i][j].value1);
+            categoryData[i].push(mapData[i][j].name);
+        }
+    }
+
+        var convertData = function(data) {
+            var res = [];
+            for (var i = 0; i < data.length; i++) {
+                var geoCoord = geoCoordMap[data[i].name];
+                if (geoCoord) {
+                    res.push({
+                        name: data[i].name,
+                        value: geoCoord.concat(data[i].value)
+                    });
+                }
+            }
+            return res;
+        };
+
+        var convertToLineData = function(data, gps) {
+            var res = [];
+            for (var i = 0; i < data.length; i++) {
+                var dataItem = data[i];
+                var toCoord = geoCoordMap[dataItem.name];
+                debugger;
+                var fromCoord = gps; //郑州
+                //  var toCoord = geoGps[Math.random()*3]; 
+                if (fromCoord && toCoord) {
+                    res.push([{
+                        coord: fromCoord,
+                        value: dataItem.value
+                    }, {
+                        coord: toCoord,
+                    }]);
+                }
+            }
+            return res;
+        };
+
+        optionXyMap01 = {
+            timeline: {
+                data: year,
+                axisType: 'category',
+                autoPlay: true,
+                playInterval: 3000,
+                left: '10%',
+                right: '10%',
+                bottom: '3%',
+                width: '80%',
+                //  height: null,
+                label: {
+                    normal: {
+                        textStyle: {
+                            color: '#ddd'
+                        }
+                    },
+                    emphasis: {
+                        textStyle: {
+                            color: '#fff'
+                        }
+                    }
+                },
+                symbolSize: 10,
+                lineStyle: {
+                    color: '#555'
+                },
+                checkpointStyle: {
+                    borderColor: '#777',
+                    borderWidth: 2
+                },
+                controlStyle: {
+                    showNextBtn: true,
+                    showPrevBtn: true,
+                    normal: {
+                        color: '#666',
+                        borderColor: '#666'
+                    },
+                    emphasis: {
+                        color: '#aaa',
+                        borderColor: '#aaa'
+                    }
+                },
+
+            },
+            baseOption: {
+
+                animation: true,
+                animationDuration: 1000,
+                animationEasing: 'cubicInOut',
+                animationDurationUpdate: 1000,
+                animationEasingUpdate: 'cubicInOut',
+                grid: {
+                    right: '1%',
+                    top: '15%',
+                    bottom: '10%',
+                    width: '20%'
+                },
+                tooltip: {
+                    trigger: 'axis', // hover触发器
+                    axisPointer: { // 坐标轴指示器，坐标轴触发有效
+                        type: 'shadow', // 默认为直线，可选为：'line' | 'shadow'
+                        shadowStyle: {
+                            color: 'rgba(150,150,150,0.1)' //hover颜色
+                        }
+                    }
+                },
+                geo: {
+                    show: true,
+                    map: 'china',
+                    roam: true,
+                    zoom: 1,
+                    center: [113.83531246, 34.0267395887],
+                    label: {
+                        emphasis: {
+                            show: false
+                        }
+                    },
+                    itemStyle: {
+                        normal: {
+                            borderColor: 'rgba(147, 235, 248, 1)',
+                            borderWidth: 1,
+                            areaColor: {
+                                type: 'radial',
+                                x: 0.5,
+                                y: 0.5,
+                                r: 0.8,
+                                colorStops: [{
+                                    offset: 0,
+                                    color: 'rgba(147, 235, 248, 0)' // 0% 处的颜色
+                                }, {
+                                    offset: 1,
+                                    color: 'rgba(147, 235, 248, .2)' // 100% 处的颜色
+                                }],
+                                globalCoord: false // 缺省为 false
+                            },
+                            shadowColor: 'rgba(128, 217, 248, 1)',
+                            // shadowColor: 'rgba(255, 255, 255, 1)',
+                            shadowOffsetX: -2,
+                            shadowOffsetY: 2,
+                            shadowBlur: 10
+                        },
+                        emphasis: {
+                            areaColor: '#389BB7',
+                            borderWidth: 0
+                        }
+                    }
+                },
+            },
+            options: []
+
+        };
+
+        for (var n = 0; n < year.length; n++) {
+
+            optionXyMap01.options.push({
+                backgroundColor: '#013954',
+                title:
+
+
+                    [{
+                        text: '整车物流平台',
+                        subtext: '   数据由整车物流部提供',
+                        left: '35%',
+                        top: '15%',
+                        textStyle: {
+                            color: '#fff',
+                            fontSize: 25
+                        }
+                    }, ],
+                xAxis: {
+                    type: 'value',
+                    scale: true,
+                    position: 'top',
+                    min: 0,
+                    boundaryGap: false,
+                    splitLine: {
+                        show: false
+                    },
+                    axisLine: {
+                        show: false
+                    },
+                    axisTick: {
+                        show: false
+                    },
+                    axisLabel: {
+                        margin: 2,
+                        textStyle: {
+                            color: '#aaa'
+                        }
+                    },
+                },
+                yAxis: {
+                    type: 'category',
+                    //  name: 'TOP 20',
+                    nameGap: 16,
+                    axisTick: {
+                        show: false,
+                        lineStyle: {
+                            color: '#ddd'
+                        }
+                    },
+                    axisLabel: {
+                        interval: 0,
+                        textStyle: {
+                            color: '#ddd'
+                        }
+                    },
+
+                },
+
+                series: [
+                    //未知作用
+                    {
+                        //文字和标志
+                        name: 'light',
+                        type: 'scatter',
+                        coordinateSystem: 'geo',
+                        data: convertData(mapData[n]),
+                        symbolSize: function(val) {
+                            return val[2] / 10;
+                        },
+                        label: {
+                            normal: {
+                                formatter: '{b}',
+                                position: 'right',
+                                show: true
+                            },
+                            emphasis: {
+                                show: true
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: colors[colorIndex][n]
+                            }
+                        }
+                    },
+                    //地图？
+                    {
+                        type: 'map',
+                        map: 'china',
+                        geoIndex: 0,
+                        aspectScale: 0.75, //长宽比
+                        showLegendSymbol: false, // 存在legend时显示
+                        label: {
+                            normal: {
+                                show: false
+                            },
+                            emphasis: {
+                                show: false,
+                                textStyle: {
+                                    color: '#fff'
+                                }
+                            }
+                        },
+                        roam: true,
+                        itemStyle: {
+                            normal: {
+                                areaColor: '#031525',
+                                borderColor: '#FFFFFF',
+                            },
+                            emphasis: {
+                                areaColor: '#2B91B7'
+                            }
+                        },
+                        animation: false,
+                        data: mapData
+                    },
+                    //地图点的动画效果
+                    {
+                        //  name: 'Top 5',
+                        type: 'effectScatter',
+                        coordinateSystem: 'geo',
+                        data: convertData(mapData[n].sort(function(a, b) {
+                            return b.value - a.value;
+                        }).slice(0, 20)),
+                        symbolSize: function(val) {
+                            return val[2] / 10;
+                        },
+                        showEffectOn: 'render',
+                        rippleEffect: {
+                            brushType: 'stroke'
+                        },
+                        hoverAnimation: true,
+                        label: {
+                            normal: {
+                                formatter: '{b}',
+                                position: 'right',
+                                show: true
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: colors[colorIndex][n],
+                                shadowBlur: 10,
+                                shadowColor: colors[colorIndex][n]
+                            }
+                        },
+                        zlevel: 1
+                    },
+                    //地图线的动画效果
+                    {
+                        type: 'lines',
+                        zlevel: 2,
+                        effect: {
+                            show: true,
+                            period: 4, //箭头指向速度，值越小速度越快
+                            trailLength: 0.02, //特效尾迹长度[0,1]值越大，尾迹越长重
+                            symbol: 'arrow', //箭头图标
+                            symbolSize: 3, //图标大小
+                        },
+                        lineStyle: {
+                            normal: {
+                                color: colors[colorIndex][n],
+                                width: 0.1, //尾迹线条宽度
+                                opacity: 0.5, //尾迹线条透明度
+                                curveness: .3 //尾迹线条曲直度
+                            }
+                        },
+                        data: convertToLineData(mapData[n], geoGpsMap[n + 1])
+                    },
+                ]
+            })
+        }
+        myChart.setOption(optionXyMap01);
+
+
+        function randomNum(minNum, maxNum) {
+            switch (arguments.length) {
+                case 1:
+                    return parseInt(Math.random() * minNum + 1, 10);
+                    break;
+                case 2:
+                    return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
+                    break;
+                default:
+                    return 0;
+                    break;
+            }
+        }
+        // var allData = {　　　　
+        //     "citys": [{
+        //         "name": "延寿",
+        //         "value": [128.331644, 45.451897, 2],
+        //         "symbolSize": 20,
+        //         "itemStyle": {
+        //             "normal": {
+        //                 "color": "#F58158"
+        //             }
+        //         }
+        //     }, {
+        //         "name": "临江",
+        //         "value": [126.918087, 41.811979, 2],
+        //         "symbolSize": 2,
+        //         "itemStyle": {
+        //             "normal": {
+        //                 "color": "#F58158"
+        //             }
+        //         }
+        //     }, {
+        //         "name": "长春",
+        //         "value": [125.323544, 43.817072, 8],
+        //         "symbolSize": 2,
+        //         "itemStyle": {
+        //             "normal": {
+        //                 "color": "#F58158"
+        //             }
+        //         }
+        //     }],
+        //     "moveLines": [{
+        //         "fromName": "黑龙江",
+        //         "toName": "珠海",
+        //         "coords": [
+        //             [126.661669, 45.742347],
+        //             [113.576726, 22.270715]
+        //         ]
+        //     }, {
+        //         "fromName": "黑龙江",
+        //         "toName": "舒兰",
+        //         "coords": [
+        //             [126.661669, 45.742347],
+        //             [126.965607, 44.406106]
+        //         ]
+        //     }, {
+        //         "fromName": "黑龙江",
+        //         "toName": "胶州",
+        //         "coords": [
+        //             [126.661669, 45.742347],
+        //             [120.033382, 36.26468]
+        //         ]
+        //     }]
+        // };
+
+        // option = {
+        //     backgroundColor: '#0B0031', // 地图背景颜色
+        //     title: {
+        //         text: '省份流向图', // 地图标题设置
+        //         // subtext: "123321", // 地图小标题设置
+        //         // sublink: "http://www.baidu.com", //小标题链接
+        //         target: "blank", //'self' 当前窗口打开，'blank' 新窗口打开
+        //         padding: 5, // 标题内边距 5  [5, 10]  [5,10,5,10]
+        //         left: "center", // 组件离容器左侧的距离,'left', 'center', 'right','20%'
+        //         top: "5%", // 组件离容器上侧的距离,'top', 'middle', 'bottom','20%'
+        //         right: "auto", // 组件离容器右侧的距离,'20%'
+        //         bottom: "auto", // 组件离容器下侧的距离,'20%'
+        //         textStyle: {
+        //             color: "#fff", //文字颜色
+        //             fontStyle: "normal", // italic斜体  oblique倾斜
+        //             fontWeight: "normal", // 文字粗细bold   bolder   lighter  100 | 200 | 300 | 400...
+        //             fontFamily: "sans-serif", // 字体系列
+        //             fontSize: 18, // 字体大小
+        //         }
+        //     },
+        //     legend: { // 右下角图例
+        //         show: false, // 是否显示
+        //         orient: 'vertical', // 图例排列方向
+        //         top: 'bottom', // 位置
+        //         left: 'right', // 位置
+        //         data: ['地点', '线路'], // 数据
+        //         textStyle: {
+        //             color: '#ffffff' //字体颜色
+        //         }
+        //     },
+        //     geo: {
+        //         show: true, // 是否显示
+        //         map: 'china', // 地图类型。world世界地图，china中国地图
+        //         // center:[115.97, 29.71], //当前视角的中心点，用经纬度表示
+        //         label: {
+        //             normal: { //普通状态下的标签文本样式。(省份名称)
+        //                 show: false, //是否在普通状态下显示标签。
+        //                 textStyle: { // 文字设置
+        //                     color: '#fff'
+        //                 },
+        //             },
+        //             emphasis: { // 是否在高亮状态下显示标签。(省份名称)
+        //                 show: true,
+        //                 textStyle: { // 文字设置
+        //                     color: '#fff'
+        //                 },
+        //             }
+        //         },
+        //         roam: true, // 是否开启鼠标缩放和平移漫游。默认不开启。如果只想要开启缩放或者平移，可以设置成 'scale' 或者 'move'。设置成 true 为都开启
+        //         itemStyle: { // 地图板块区域的多边形 图形样式
+        //             normal: { // 默认板块信息
+        //                 areaColor: {
+        //                     type: 'radial',
+        //                     x: 0.5,
+        //                     y: 0.5,
+        //                     r: 0.8,
+        //                     colorStops: [{
+        //                         offset: 0,
+        //                         color: 'rgba(147, 235, 248, 0)' // 0% 处的颜色
+        //                     }, {
+        //                         offset: 1,
+        //                         color: 'rgba(147, 235, 248, .2)' // 100% 处的颜色
+        //                     }],
+        //                     globalCoord: false // 缺省为 false
+        //                 },
+        //                 shadowColor: 'rgba(128, 217, 248, 1)',
+        //                 borderColor: 'rgba(147, 235, 248, 1)',
+        //                 shadowBlur: 10
+        //             },
+        //             emphasis: { // 高亮版板块信息
+        //                 areaColor: '#389BB7',
+        //                 borderWidth: 0
+        //             }
+        //         }
+        //     },
+        //     series: [{
+        //         name: '地点',
+        //         type: 'effectScatter', // 特效散点图
+        //         coordinateSystem: 'geo', // 'cartesian2d'使用二维的直角坐标系。'geo'使用地理坐标系
+        //         zlevel: 2, // 所有图形的 zlevel 值。
+        //         rippleEffect: { //涟漪特效相关配置。
+        //             brushType: 'stroke', //波纹的绘制方式，可选 'stroke' 和 'fill'。
+        //             period: 4, // 动画的时间。
+        //             scale: 2.5, // 动画中波纹的最大缩放比例。
+        //         },
+        //         label: {
+        //             normal: {
+        //                 show: false, //是否显示标签。
+        //                 position: "inside", //标签的位置。// 绝对的像素值[10, 10]
+        //                 offset: [30, 40], //是否对文字进行偏移。默认不偏移。例如：[30, 40] 表示文字在横向上偏移 30，纵向上偏移 40。
+        //                 formatter: '{b}: {c}', //标签内容格式器。模板变量有 {a}、{b}、{c}，分别表示系列名，数据名，数据值。
+        //             },
+        //             emphasis: {
+        //                 show: true,
+        //                 position: 'right',
+        //                 formatter: '{b}'
+        //             }
+        //         },
+        //         symbolSize: 2, // 标记的大小，可以设置成诸如 10 这样单一的数字，也可以用数组分开表示宽和高，例如 [20, 10] 表示标记宽为20，高为10。
+        //         showEffectOn: 'render', // 配置何时显示特效。可选：'render' 绘制完成后显示特效。'emphasis' 高亮（hover）的时候显示特效。
+        //         itemStyle: { // 图形样式，normal 是图形在默认状态下的样式；emphasis 是图形在高亮状态下的样式，比如在鼠标悬浮或者图例联动高亮时。
+        //             normal: {
+        //                 color: '#46bee9'
+        //             }
+        //         },
+        //         data: allData.citys
+        //     }, {
+        //         name: '线路',
+        //         type: 'lines',
+        //         coordinateSystem: 'geo', // 'cartesian2d'使用二维的直角坐标系。'geo'使用地理坐标系
+        //         zlevel: 2,
+        //         large: true, // 是否开启大规模散点图的优化，在数据图形特别多的时候（>=5k）可以开启。开启后配合 largeThreshold 在数据量大于指定阈值的时候对绘制进行优化。缺点：优化后不能自定义设置单个数据项的样式。
+        //         effect: {
+        //             show: true,
+        //             constantSpeed: 30, // 点移动的速度
+        //             symbol: 'pin', // 图形 'circle', 'rect', 'roundRect', 'triangle', 'diamond', 'pin', 'arrow'
+        //             symbolSize: 3, // 标记的大小，可以设置成诸如 10 这样单一的数字，也可以用数组分开表示宽和高，例如 [20, 10] 表示标记宽为20，高为10。
+        //             trailLength: 0, // 线的宽度
+        //         },
+        //         lineStyle: { // 线的颜色、宽度，样式设置
+        //             normal: {
+        //                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+        //                     offset: 0,
+        //                     color: '#FF8F59'
+        //                 }, {
+        //                     offset: 1,
+        //                     color: '#FF8F59'
+        //                 }], false),
+        //                 width: 3, // 线的宽度
+        //                 opacity: 0.2, // 线的透明度
+        //                 curveness: 0.1 // 线的完全程度
+        //             }
+        //         },
+        //         data: allData.moveLines
+        //     }]
+        // };
+       
+    </script>
+</body>
+
+</html>
